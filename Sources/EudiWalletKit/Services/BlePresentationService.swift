@@ -78,6 +78,7 @@ public final class BlePresentationService: @unchecked Sendable, PresentationServ
 	///   - userAccepted: True if user accepted to send the response
 	///   - itemsToSend: The selected items to send organized in document types and namespaces
 	public func sendResponse(userAccepted: Bool, itemsToSend: RequestItems, onSuccess: (@Sendable (URL?) -> Void)?) async throws  {
+		bleServerTransfer.onSuccess = onSuccess
 		await handleSelected?(userAccepted, itemsToSend)
 		handleSelected = nil
 		TransactionLogUtils.setCborTransactionLogResponseInfo(bleServerTransfer, transactionLog: &transactionLog)

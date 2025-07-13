@@ -179,7 +179,9 @@ public final class PresentationSession: @unchecked Sendable, ObservableObject {
 			await MainActor.run { status = .userSelected }
 			let action = { [ weak self] in _ = try await self?.presentationService.sendResponse(userAccepted: userAccepted, itemsToSend: itemsToSend, onSuccess: onSuccess) }
 			try await EudiWallet.authorizedAction(action: action, disabled: !userAuthenticationRequired, dismiss: { onCancel?() }, localizedReason: NSLocalizedString("authenticate_to_share_data", comment: "") )
-			await MainActor.run { status = .responseSent }
+			if (onSuccess == nil){
+				await MainActor.run { status = .responseSent }
+			}
 			try await updateKeyBatchInfoAndDeleteCredentialIfNeeded(presentedIds: Array(itemsToSend.keys))
 			if let transactionLogger { do { try await transactionLogger.log(transaction: presentationService.transactionLog) } catch { logger.error("Failed to log transaction: \(error)") } }
 		} catch {
