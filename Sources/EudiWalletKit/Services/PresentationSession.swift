@@ -120,10 +120,10 @@ public final class PresentationSession: @unchecked Sendable, ObservableObject {
 	///
 	/// On success ``deviceEngagement`` published variable will be set with the result and ``status`` will be ``.qrEngagementReady``
 	/// On error ``uiError`` will be filled and ``status`` will be ``.error``
-	public func startQrEngagement() async throws {
+	public func startQrEngagement(secureAreaName: String?) async throws {
 		if docIdToPresentInfo.count == 0 { await setError(NSError(domain: "\(PresentationSession.self)", code: 0, userInfo: [NSLocalizedDescriptionKey: Self.NotAvailableStr])); return }
 		do {
-			let data = try await presentationService.startQrEngagement(secureAreaName: nil, crv: .P256)
+			let data = try await presentationService.startQrEngagement(secureAreaName: secureAreaName, crv: .P256)
 			await MainActor.run {
 				deviceEngagement = data
 				status = .qrEngagementReady
