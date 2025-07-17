@@ -23,7 +23,7 @@ import MdocDataTransfer18013
 /// Implementation is based on the ISO/IEC 18013-5 specification
 
 public final class BlePresentationService: @unchecked Sendable, PresentationService {
-	var bleServerTransfer: MdocGattServer
+	public var bleServerTransfer: MdocGattServer
 	public var status: TransferStatus = .initializing
 	var continuationRequest: CheckedContinuation<UserRequestInfo, Error>?
 	var handleSelected: ((Bool, RequestItems?) async -> Void)?
