@@ -43,7 +43,7 @@
       "location" : "https://github.com/rhbrunetto/eudi-lib-ios-iso18013-data-transfer.git",
       "state" : {
         "branch" : "fix/ble-large-payload",
-        "revision" : "bc5263a8d2efd79b376a4f8b5bf123856d4a5d01"
+        "revision" : "df911967d7dec2984b37774fc658ab05dff5ad74"
       }
     },
     {
