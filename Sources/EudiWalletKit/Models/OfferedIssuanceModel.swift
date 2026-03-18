@@ -46,7 +46,7 @@ public struct OfferedIssuanceModel: Sendable {
 @Copyable
 public struct OfferedDocModel: Sendable {
 	/// public initializer
-	public init(credentialConfigurationIdentifier: String, docType: String? = nil, vct: String? = nil, scope: String, identifier: String?, displayName: String, algValuesSupported: [String], keyOptions: KeyOptions) {
+	public init(credentialConfigurationIdentifier: String, docType: String? = nil, vct: String? = nil, scope: String?, identifier: String?, displayName: String, algValuesSupported: [String], claims: [Claim], credentialOptions: CredentialOptions, keyOptions: KeyOptions?) {
 		self.credentialConfigurationIdentifier = credentialConfigurationIdentifier
 		self.docType = docType
 		self.vct = vct
@@ -54,6 +54,8 @@ public struct OfferedDocModel: Sendable {
 		self.identifier = identifier
 		self.displayName = displayName
 		self.algValuesSupported = algValuesSupported
+		self.claims = claims
+		self.credentialOptions = credentialOptions
 		self.keyOptions = keyOptions
 	}
 	/// Credential configuration identifier from VCI issuer
@@ -63,7 +65,7 @@ public struct OfferedDocModel: Sendable {
 	/// vct (for sdJwt credential offers)
 	public let vct: String?
 	/// Scope
-	public let scope: String
+	public let scope: String?
 	/// issuer configuration identifier
 	public let identifier: String?
 	/// Display name for document type
@@ -74,8 +76,12 @@ public struct OfferedDocModel: Sendable {
 	public var docTypeOrVct: String? {
 		docType ?? vct
 	}
-	// default key options for the credential
-	public let keyOptions: KeyOptions
+	// claims supported for the document
+	public let claims: [Claim]
+	// options for the credential
+	public let credentialOptions: CredentialOptions
+	// key options
+	public let keyOptions: KeyOptions?
 
 	/// Convert OfferedDocModel to DocTypeIdentifier
 	public var docTypeIdentifier: DocTypeIdentifier? {

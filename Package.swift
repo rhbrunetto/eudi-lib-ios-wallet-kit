@@ -31,11 +31,9 @@ let package = Package(
 			dependencies: [
 				.product(name: "MdocDataTransfer18013", package: "eudi-lib-ios-iso18013-data-transfer"),
 				.product(name: "WalletStorage", package: "eudi-lib-ios-wallet-storage"),
-				.product(name: "SiopOpenID4VP", package: "eudi-lib-ios-siop-openid4vp-swift"),
+				.product(name: "OpenID4VP", package: "eudi-lib-ios-siop-openid4vp-swift"),
 				.product(name: "OpenID4VCI", package: "eudi-lib-ios-openid4vci-swift"),
 				.product(name: "eudi-lib-sdjwt-swift", package: "eudi-lib-sdjwt-swift"),
-				.product(name: "Logging", package: "swift-log"),
-				.product(name: "FileLogging", package: "swift-log-file"),
 				.product(name: "StatiumSwift", package: "eudi-lib-ios-statium-swift"),
 				.product(name: "Copyable", package: "SwiftCopyableMacro"),
 			]

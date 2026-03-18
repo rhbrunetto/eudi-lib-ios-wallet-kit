@@ -37,11 +37,11 @@ class TransactionLogUtils {
 		return TransactionLog.RelyingParty(name: name, isVerified: requestInfo.readerAuthValidated ?? false, certificateChain: requestInfo.certificateChain ?? [], readerAuth: requestInfo.readerAuthBytes)
 	}
 
-	static func parseDocClaimsDecodables(_ transactionLog: TransactionLog, uiCulture: String?) -> [any DocClaimsDecodable] {
+	static func parseDocClaimsDecodables(_ transactionLog: TransactionLog, uiCulture: String?) -> [DocClaimsModel] {
 		guard let raw = transactionLog.rawResponse else { return [] }
-		var res = [any DocClaimsDecodable]()
+		var res = [DocClaimsModel]()
 		if transactionLog.dataFormat == .cbor {
-			guard let dr = DeviceResponse(data: raw.bytes) else { return [] }
+			guard let dr = try? DeviceResponse(data: raw.bytes) else { return [] }
 			for (index, doc) in (dr.documents ?? []).enumerated() {
 				let docMetadata = transactionLog.docMetadata?[index]
 				if let docDecodable = parseCBORDocClaimsDecodable(id: UUID().uuidString, docType: doc.docType, issuerSigned: doc.issuerSigned, metadata: docMetadata, uiCulture: uiCulture) {
@@ -52,15 +52,7 @@ class TransactionLogUtils {
 			let decoder = JSONDecoder()
 			do {
 				let vpResponse = try decoder.decode(VpResponsePayload.self, from: raw)
-				if let ps = vpResponse.presentation_submission {
-					for m in ps.descriptorMap.enumerated() {
-						let presentedStr = vpResponse.verifiable_presentations[m.offset]
-						let dataFormat: DocDataFormat = if (m.element.toJSON()["format"] as? String) == "mso_mdoc" { .cbor } else { .sdjwt }
-						let metadata = transactionLog.docMetadata?[m.offset]
-						if let dcc = parseDocClaimDecodable(presentedStr, dataFormat: dataFormat, metadata: metadata, uiCulture: uiCulture) {  res.append(dcc) }
-
-					}
-				} else if let df = vpResponse.data_formats {
+				if let df = vpResponse.data_formats {
 					for m in df.enumerated() {
 						let presentedStr = vpResponse.verifiable_presentations[m.offset]
 						let metadata = transactionLog.docMetadata?[m.offset]
@@ -75,23 +67,26 @@ class TransactionLogUtils {
 		return res
 	}
 
-	static func parseDocClaimDecodable(_ presentedStr: String, dataFormat: DocDataFormat, metadata: Data?, uiCulture: String?) -> (any DocClaimsDecodable)? {
+	static func parseDocClaimDecodable(_ presentedStr: String, dataFormat: DocDataFormat, metadata: Data?, uiCulture: String?) -> DocClaimsModel? {
 		if dataFormat == .cbor {
-				if let isd = Data(base64Encoded: presentedStr), let iss = IssuerSigned(data: isd.bytes), let docDecodable = parseCBORDocClaimsDecodable(id: UUID().uuidString, docType: iss.issuerAuth.mso.docType, issuerSigned: iss, metadata: metadata, uiCulture: uiCulture) { return docDecodable }
+			guard let isd = Data(base64urlEncoded: presentedStr) ?? Data(base64Encoded: presentedStr) else { return nil }
+			let iss = if let dr = try? DeviceResponse(data: isd.bytes) { dr.documents?.first?.issuerSigned } else { try? IssuerSigned(data: isd.bytes) }
+			guard let iss else { return nil}
+			if let docDecodable = parseCBORDocClaimsDecodable(id: UUID().uuidString, docType: iss.issuerAuth.mso.docType, issuerSigned: iss, metadata: metadata, uiCulture: uiCulture) { return docDecodable }
 		} else if dataFormat == .sdjwt {
-				if let docDecodable = parseSdJwtDocClaimsDecodable(id: UUID().uuidString, docType: "", sdJwtSerialized: presentedStr, metadata: metadata, uiCulture: uiCulture) { return docDecodable }
+			if let docDecodable = parseSdJwtDocClaimsDecodable(id: UUID().uuidString, docType: "", sdJwtSerialized: presentedStr, metadata: metadata, uiCulture: uiCulture) { return docDecodable }
 		}
 		return nil
 	}
 
-	static func parseCBORDocClaimsDecodable(id: String, docType: String, issuerSigned: IssuerSigned, metadata: Data?, uiCulture: String?) -> (any DocClaimsDecodable)? {
-		let document = WalletStorage.Document(id: id, docType: docType, docDataFormat: .cbor, data: Data(issuerSigned.encode(options: CBOROptions())), docKeyInfo: nil, createdAt: .now, modifiedAt: .now, metadata: metadata, displayName: docType, status: .issued)
+	static func parseCBORDocClaimsDecodable(id: String, docType: String, issuerSigned: IssuerSigned, metadata: Data?, uiCulture: String?) -> DocClaimsModel? {
+		let document = WalletStorage.Document(id: id, docType: docType, docDataFormat: .cbor, data: Data(issuerSigned.encode(options: CBOROptions())), docKeyInfo: DocKeyInfo.default.toData(), createdAt: .now, modifiedAt: .now, metadata: metadata, displayName: docType, status: .issued)
 		return StorageManager.toClaimsModel(doc: document, uiCulture: uiCulture, modelFactory: nil)
 	}
 
-	static func parseSdJwtDocClaimsDecodable(id: String, docType: String, sdJwtSerialized: String, metadata: Data?, uiCulture: String?) -> (any DocClaimsDecodable)? {
+	static func parseSdJwtDocClaimsDecodable(id: String, docType: String, sdJwtSerialized: String, metadata: Data?, uiCulture: String?) -> (DocClaimsModel)? {
 		guard let sdJwtData = sdJwtSerialized.data(using: .utf8) else { return nil }
-		let document = WalletStorage.Document(id: id, docType: docType, docDataFormat: .sdjwt, data: sdJwtData, docKeyInfo: nil, createdAt: .now, modifiedAt: .now, metadata: metadata, displayName: docType, status: .issued)
+		let document = WalletStorage.Document(id: id, docType: docType, docDataFormat: .sdjwt, data: sdJwtData, docKeyInfo: DocKeyInfo.default.toData(), createdAt: .now, modifiedAt: .now, metadata: metadata, displayName: docType, status: .issued)
 		return StorageManager.toClaimsModel(doc: document, uiCulture: uiCulture, modelFactory: nil)
 	}
 
