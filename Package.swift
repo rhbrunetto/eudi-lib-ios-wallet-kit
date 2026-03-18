@@ -15,12 +15,12 @@ let package = Package(
 	dependencies: [
 		.package(url: "https://github.com/apple/swift-log.git", from: "1.6.3"),
 		.package(url: "https://github.com/crspybits/swift-log-file", from: "0.1.0"),
-		.package(url: "https://github.com/rhbrunetto/eudi-lib-ios-iso18013-data-transfer.git", branch: "fix/ble-large-payload"),
+		.package(path: "/Users/rhbrunetto/dev/blerify/iso-contributions/eudi-lib-ios-iso18013-data-transfer"),
 		.package(url: "https://github.com/rhbrunetto/eudi-lib-ios-wallet-storage.git", branch: "fix/ble-large-payload"),
-		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-sdjwt-swift.git", exact: "0.7.2"),
-		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-ios-siop-openid4vp-swift.git", exact: "0.13.1"),
-		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-ios-openid4vci-swift.git",exact: "0.15.1"),
-		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-ios-statium-swift.git", exact: "0.2.0"),
+		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-sdjwt-swift.git", exact: "0.13.0"),
+		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-ios-siop-openid4vp-swift.git", exact: "0.30.0"),
+		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-ios-openid4vci-swift.git", exact: "0.30.0"),
+		.package(url: "https://github.com/eu-digital-identity-wallet/eudi-lib-ios-statium-swift.git", exact: "0.3.1"),
 		.package(url: "https://github.com/eu-digital-identity-wallet/SwiftCopyableMacro.git", from: "0.0.3")
 	],
 	targets: [
