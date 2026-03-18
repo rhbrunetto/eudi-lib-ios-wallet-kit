@@ -18,6 +18,17 @@ import Foundation
 import MdocDataModel18013
 import MdocDataTransfer18013
 
+/// Error thrown when the BLE reader disconnects during a pending operation
+public enum BlePresentationError: LocalizedError {
+	case readerDisconnected
+
+	public var errorDescription: String? {
+		switch self {
+		case .readerDisconnected: return "BLE reader disconnected"
+		}
+	}
+}
+
 /// Implements proximity attestation presentation with QR to BLE data transfer
 
 /// Implementation is based on the ISO/IEC 18013-5 specification
@@ -26,6 +37,7 @@ public final class BlePresentationService: @unchecked Sendable, PresentationServ
 	var bleServerTransfer: MdocGattServer
 	public var status: TransferStatus = .initializing
 	var continuationRequest: CheckedContinuation<UserRequestInfo, Error>?
+	public var onDisconnect: (() -> Void)?
 	var handleSelected: ((Bool, RequestItems?) async -> Void)?
 	var deviceEngagement: String?
 	var request: UserRequestInfo?
@@ -66,6 +78,15 @@ public final class BlePresentationService: @unchecked Sendable, PresentationServ
 		return userRequestInfo
 	}
 
+	/// Stop the BLE server and resume any pending continuation
+	public func stop() {
+		bleServerTransfer.stop()
+		if let continuation = continuationRequest {
+			continuationRequest = nil
+			continuation.resume(throwing: BlePresentationError.readerDisconnected)
+		}
+	}
+
 	public func unlockKey(id: String) async throws -> Data? {
 		if let dpo = bleServerTransfer.privateKeyObjects[id] {
 			return try await dpo.secureArea.unlockKey(id: id)
@@ -94,6 +115,13 @@ extension BlePresentationService: MdocOfflineDelegate {
 		switch newStatus {
 		case .qrEngagementReady:
 			if let qrCode = self.bleServerTransfer.qrCodePayload { deviceEngagement = qrCode }
+		case .disconnected:
+			if let continuation = continuationRequest {
+				continuationRequest = nil
+				continuation.resume(throwing: BlePresentationError.readerDisconnected)
+			} else {
+				onDisconnect?()
+			}
 		default: break
 		}
 	}

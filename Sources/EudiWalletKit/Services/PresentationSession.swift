@@ -146,8 +146,19 @@ public final class PresentationSession: @unchecked Sendable, ObservableObject {
 	public func receiveRequest() async -> UserRequestInfo? {
 		do {
 			let request = try await presentationService.receiveRequest()
+			// Register disconnect handler for post-request phase
+			if let bleService = presentationService as? BlePresentationService {
+				bleService.onDisconnect = { [weak self] in
+					Task { @MainActor [weak self] in
+						self?.status = .disconnected
+					}
+				}
+			}
 			try await decodeRequest(request)
 			return request
+		} catch let error as BlePresentationError where error == .readerDisconnected {
+			await MainActor.run { status = .disconnected }
+			return nil
 		} catch {
 			await setError(error)
 			return nil
